@@ -41,6 +41,7 @@ jobs:
 
       - name: Generate new temporary service key
         env:
+          SK_PREFIX: sk
           SK_PASSWORD: ${{ secrets.SK_PASSWORD }}
         run: ./generate
 
