@@ -11,11 +11,11 @@ cf create-service-key "$CF_SERVICE_INSTANCE" "$SK_NAME"
 
 # Retrieve the service key, skip the first 2 non-JSON header lines,
 # then extract the value of the top-level 'credentials' property
-JSON_FILE="${SK_NAME}.json"
+JSON_FILE="${SK_PREFIX}.json"
 cf service-key "$CF_SERVICE_INSTANCE" "$SK_NAME" \
   | tail -n +3 \
   | jq '.credentials' \
-  > "$JSON_FILE"
+    > "$JSON_FILE"
 
 # Store in a password-protected zip (AES-256), then remove the plain JSON
 ZIP_FILE="$KEYS_DIR/${SK_NAME}.zip"
