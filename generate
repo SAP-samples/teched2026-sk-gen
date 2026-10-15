@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+source ./common.sh
+
+echo "Service key name : $SK_NAME"
+
+# Create the service key
+cf create-service-key "$CF_SERVICE_INSTANCE" "$SK_NAME"
+
+# Retrieve the service key, skip the first 2 non-JSON header lines,
+# then extract the value of the top-level 'credentials' property
+JSON_FILE="${SK_NAME}.json"
+cf service-key "$CF_SERVICE_INSTANCE" "$SK_NAME" \
+  | tail -n +3 \
+  | jq '.credentials' \
+  > "$JSON_FILE"
+
+# Store in a password-protected zip (AES-256), then remove the plain JSON
+ZIP_FILE="$KEYS_DIR/${SK_NAME}.zip"
+zip --quiet --encrypt --password "$SK_PASSWORD" -9j "$ZIP_FILE" "$JSON_FILE"
+rm "$JSON_FILE"
+
+echo "New service key stored in encrypted zip $ZIP_FILE"

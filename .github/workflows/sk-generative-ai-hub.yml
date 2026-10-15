@@ -1,0 +1,67 @@
+name: Temp service keys for Generative AI Hub
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/20 * * * *"
+
+jobs:
+  generate-service-key:
+    name: Maintain temporary service keys
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+
+    env:
+      CF_SERVICE_INSTANCE: generative-ai-hub
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Install cf CLI v8
+        run: |
+          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo gpg --dearmor -o /usr/share/keyrings/cf-cli.gpg
+          echo "deb [signed-by=/usr/share/keyrings/cf-cli.gpg] https://packages.cloudfoundry.org/debian stable main" \
+            | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+          sudo apt-get update -q
+          sudo apt-get install -y cf8-cli
+
+      - name: Authenticate with Cloud Foundry
+        env:
+          CF_API:      ${{ secrets.CF_API }}
+          CF_USERNAME: ${{ secrets.CF_USERNAME }}
+          CF_PASSWORD: ${{ secrets.CF_PASSWORD }}
+          CF_ORG:      ${{ secrets.CF_ORG }}
+          CF_SPACE:    ${{ secrets.CF_SPACE }}
+        run: |
+          cf api "$CF_API"
+          cf auth "$CF_USERNAME" "$CF_PASSWORD"
+          cf target -o "$CF_ORG" -s "$CF_SPACE"
+
+      - name: Generate new temporary service key
+        env:
+          SK_PASSWORD: ${{ secrets.SK_PASSWORD }}
+        run: ./generate
+
+      - name: Remove old service keys
+        env:
+          SK_MAX_AGE: 30
+        run: ./cleanup
+
+      - name: Commit and push zip file
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Authenticate push via GITHUB_TOKEN
+          git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+
+          git add keys/
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: rotate service keys [skip ci]"
+            git push
+          fi

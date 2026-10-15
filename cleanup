@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+source ./common.sh
+
+echo "Max age (mins) : $SK_MAX_AGE"
+
+shopt -s nullglob
+FILES=("$KEYS_DIR"/*)
+
+if [[ ${#FILES[@]} -eq 0 ]]; then
+  echo "No files found in $KEYS_DIR"
+  exit 0
+fi
+
+REMOVED=0
+
+for FILE in "${FILES[@]}"; do
+  SK_NAME="$(basename "$FILE")"
+  SK_NAME="${SK_NAME%.*}"
+
+  # Extract the timestamp suffix (YYYYmmddHHMMSS) from the filename
+  TS="${SK_NAME##*-}"
+  FILE_TIME=$(date -d "${TS:0:8} ${TS:8:2}:${TS:10:2}:${TS:12:2}" +%s 2>/dev/null) || {
+    echo "Skipping $SK_NAME (cannot parse timestamp)"
+    continue
+  }
+  AGE_SECS=$(( NOW - FILE_TIME ))
+
+  if (( AGE_SECS >= MAX_AGE_SECS )); then
+    echo "Removing $SK_NAME (age: $(( AGE_SECS / 60 )) mins)"
+
+    cf delete-service-key "$CF_SERVICE_INSTANCE" "$SK_NAME" -f
+    rm "$FILE"
+
+    (( REMOVED++ )) || true
+  fi
+done
+
+echo "Done. $REMOVED service key(s) removed."
