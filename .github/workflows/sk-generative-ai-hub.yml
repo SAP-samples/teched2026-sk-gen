@@ -47,7 +47,7 @@ jobs:
 
       - name: Remove old service keys
         env:
-          SK_MAX_AGE: 30
+          SK_MAX_AGE: 60
         run: ./cleanup
 
       - name: Commit and push zip file
