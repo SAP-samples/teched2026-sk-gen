@@ -58,6 +58,7 @@ jobs:
           # Authenticate push via GITHUB_TOKEN
           git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
 
+          git pull
           git add keys/
 
           if git diff --cached --quiet; then
