@@ -1,4 +1,4 @@
-name: Temp service keys for Generative AI Hub
+name: Generate service keys for Generative AI Hub
 
 on:
   workflow_dispatch:
@@ -6,8 +6,8 @@ on:
     - cron: "*/20 * * * *"
 
 jobs:
-  generate-service-key:
-    name: Maintain temporary service keys
+  generate-service-keys:
+    name: Generate new temporary service keys
     runs-on: ubuntu-26.04
     permissions:
       contents: write
@@ -45,12 +45,7 @@ jobs:
           SK_PASSWORD: ${{ secrets.SK_PASSWORD }}
         run: ./generate
 
-      - name: Remove old service keys
-        env:
-          SK_MAX_AGE: 60
-        run: ./cleanup
-
-      - name: Commit and push zip file
+      - name: Commit and push changes
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -64,6 +59,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "chore: rotate service keys [skip ci]"
+            git commit -m "chore: generate new service keys [skip ci]"
             git push
           fi
