@@ -2,7 +2,10 @@
 
 # Service key management for the Developer Garage at SAP TechEd 2026
 
-Makes temporary (limited lifetime) service keys available:
+Makes temporary (limited lifetime) service keys available.
+
+> TL;DR - to activate / deactivate this facility, enable / disable the
+> [workflows](https://github.com/SAP-samples/teched2026-sk-gen/actions).
 
 Uses `generate` to:
 
@@ -11,11 +14,15 @@ Uses `generate` to:
 - retrieves the JSON value of the service key's `credentials` property
 - stores the JSON in a password-protected ZIP file, in the `keys/` dir
 
+The workflow `sk-generate.yml` contains a single job that runs `generate` on a regular basis.
+
 Uses `cleanup` to:
 
 - look through files in the `keys/` dir
 - identify those, via the timestamp suffix in their names, that should be expired due to their age
 - deletes the service key and the file, for those identified
+
+The workflow `sk-cleanup.yml` contains a single job that runs `cleanup` on a regular basis.
 
 Uses values for the following GitHub repo secrets / env vars in workflows:
 
