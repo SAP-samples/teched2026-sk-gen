@@ -3,7 +3,7 @@ name: Remove old service keys for Generative AI Hub
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/20 * * * *"
+    - cron: "5/20 * * * *"
 
 jobs:
   cleanup-service-keys:
